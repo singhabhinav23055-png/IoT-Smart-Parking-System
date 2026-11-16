@@ -1,0 +1,1131 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Parking Status | Park.Guard</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --background: #0b0914;
+      --panel: #191528;
+      --panel-light: #231d35;
+      --purple: #a879ef;
+      --pink: #e88bd0;
+      --cyan: #79d9ed;
+      --green: #57d9b0;
+      --red: #ff7799;
+      --text: #f5f1ff;
+      --muted: #aaa1bd;
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 25px;
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 10% 10%, rgba(112,75,170,.20), transparent 38%),
+        radial-gradient(ellipse at 90% 85%, rgba(75,100,160,.15), transparent 35%),
+        var(--background);
+    }
+
+    .container {
+      max-width: 1250px;
+      margin: auto;
+    }
+
+    /* HEADER */
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-bottom: 35px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      font-size: 24px;
+      background: linear-gradient(135deg, #59417c, #302344);
+      border: 1px solid #765c9c;
+      box-shadow: 0 0 22px rgba(168,121,239,.18);
+    }
+
+    .brand h2 {
+      font-size: 19px;
+      letter-spacing: 2px;
+    }
+
+    .brand p {
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      margin-top: 5px;
+    }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 5px;
+      padding: 5px;
+      border-radius: 12px;
+      background: var(--panel);
+      border: 1px solid #302941;
+    }
+
+    .nav span {
+      padding: 10px 15px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .nav .active {
+      color: #21172e;
+      background: #f5efff;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .connection {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #211b31;
+      border: 1px solid #403451;
+      border-radius: 25px;
+      padding: 11px 15px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .connection-dot {
+      height: 9px;
+      width: 9px;
+      border-radius: 50%;
+      background: #eebd58;
+    }
+
+    .connection-dot.online {
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green);
+    }
+
+    .connection-dot.offline {
+      background: var(--red);
+      box-shadow: 0 0 12px var(--red);
+    }
+
+    /* PAGE TITLE */
+
+    .heading {
+      margin-bottom: 24px;
+    }
+
+    .heading h1 {
+      font-size: clamp(26px, 4vw, 36px);
+      margin-bottom: 9px;
+    }
+
+    .heading p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* STATISTICS */
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .stat {
+      padding: 21px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #241e37, #191526);
+      border: 1px solid #3b304f;
+      box-shadow: 0 8px 25px rgba(0,0,0,.12);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 1.2px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      margin-top: 12px;
+    }
+
+    .stat.total .stat-value {
+      color: var(--cyan);
+    }
+
+    .stat.free .stat-value {
+      color: var(--green);
+    }
+
+    .stat.occupied .stat-value {
+      color: var(--red);
+    }
+
+    /* MAIN LAYOUT */
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 17px;
+    }
+
+    .section-heading h2 {
+      font-size: 19px;
+    }
+
+    .section-heading span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    /* PARKING CARDS */
+
+    .slots {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .slot {
+      min-width: 0;
+      padding: 17px;
+      border-radius: 17px;
+      background: linear-gradient(145deg, #211b32, #171323);
+      border: 1px solid #443653;
+      transition: border-color .4s, box-shadow .4s;
+    }
+
+    .slot.free {
+      border-color: rgba(87,217,176,.65);
+      box-shadow: 0 0 18px rgba(87,217,176,.07);
+    }
+
+    .slot.occupied {
+      border-color: rgba(255,119,153,.7);
+      box-shadow: 0 0 20px rgba(255,119,153,.09);
+    }
+
+    .slot.unknown {
+      border-color: #625773;
+    }
+
+    .slot-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .slot-top h3 {
+      font-size: 14px;
+    }
+
+    .status {
+      padding: 7px 11px;
+      border-radius: 20px;
+      background: #393246;
+      color: #ded5ed;
+      font-size: 10px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .free .status {
+      background: rgba(87,217,176,.15);
+      color: var(--green);
+    }
+
+    .occupied .status {
+      background: rgba(255,119,153,.15);
+      color: var(--red);
+    }
+
+    /* PARKING BAY */
+
+    .parking-bay {
+      height: 185px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 2px dashed #655675;
+      border-radius: 12px;
+      background:
+        radial-gradient(ellipse at center, rgba(123,91,159,.17), transparent 70%),
+        #100e19;
+      transition: border-color .4s, background .4s;
+    }
+
+    .free .parking-bay {
+      border-color: rgba(87,217,176,.65);
+    }
+
+    .occupied .parking-bay {
+      border-color: rgba(255,119,153,.75);
+      background:
+        radial-gradient(ellipse at center, rgba(232,100,153,.17), transparent 70%),
+        #100e19;
+    }
+
+    .parking-bay::before,
+    .parking-bay::after {
+      content: "";
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      width: 3px;
+      border-radius: 4px;
+      background: repeating-linear-gradient(
+        to bottom,
+        #6a5b80 0px,
+        #6a5b80 12px,
+        transparent 12px,
+        transparent 24px
+      );
+      opacity: .55;
+    }
+
+    .parking-bay::before {
+      left: 12px;
+    }
+
+    .parking-bay::after {
+      right: 12px;
+    }
+
+    .bay-label {
+      position: absolute;
+      bottom: 9px;
+      right: 13px;
+      color: #9d90b3;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+    }
+
+    .entry-label {
+      position: absolute;
+      top: 9px;
+      color: #82768f;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+    }
+
+    /* STYLIZED 3D-LOOKING CAR */
+
+    .car {
+      width: 52px;
+      height: 112px;
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(-145px) scale(.85);
+      transition:
+        transform 1.5s cubic-bezier(.2,.75,.3,1),
+        opacity .6s ease;
+      filter: drop-shadow(0 9px 9px rgba(0,0,0,.65));
+    }
+
+    .car-body {
+      position: relative;
+      width: 39px;
+      height: 91px;
+      border-radius: 15px 15px 10px 10px;
+      background: linear-gradient(
+        100deg,
+        #8990a5 0%,
+        #ffffff 18%,
+        #e4e8f2 43%,
+        #ffffff 67%,
+        #9299ae 100%
+      );
+      border: 1px solid #ffffff;
+      box-shadow:
+        inset 4px 0 5px rgba(255,255,255,.8),
+        inset -4px 0 6px rgba(39,32,61,.35),
+        0 0 16px rgba(207,173,255,.22);
+    }
+
+    .car-glass {
+      position: absolute;
+      left: 5px;
+      width: 27px;
+      background: linear-gradient(135deg, #171526, #55546d);
+      border: 1px solid #9d9bb7;
+      border-radius: 7px;
+    }
+
+    .car-glass.front {
+      top: 17px;
+      height: 25px;
+    }
+
+    .car-glass.rear {
+      bottom: 14px;
+      height: 19px;
+    }
+
+    .car-roof {
+      position: absolute;
+      top: 45px;
+      left: 7px;
+      width: 23px;
+      height: 2px;
+      background: rgba(85,79,111,.8);
+    }
+
+    .car-light {
+      position: absolute;
+      bottom: 3px;
+      left: 5px;
+      right: 5px;
+      height: 4px;
+      border-radius: 5px;
+      background: #ff789c;
+      box-shadow: 0 0 8px #ff789c;
+    }
+
+    .wheel {
+      position: absolute;
+      z-index: 3;
+      width: 7px;
+      height: 18px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #090911, #666477, #101018);
+      box-shadow: 0 1px 3px #000;
+    }
+
+    .wheel.left {
+      left: 0;
+    }
+
+    .wheel.right {
+      right: 0;
+    }
+
+    .wheel.front {
+      top: 25px;
+    }
+
+    .wheel.rear {
+      bottom: 25px;
+    }
+
+    .occupied .car {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .occupied .car-body {
+      box-shadow:
+        inset 4px 0 5px rgba(255,255,255,.8),
+        inset -4px 0 6px rgba(39,32,61,.35),
+        0 0 19px rgba(213,140,235,.5);
+    }
+
+    /* SIDE PANEL */
+
+    .side-panel {
+      padding: 20px;
+      border-radius: 17px;
+      background: linear-gradient(145deg, #251f38, #171323);
+      border: 1px solid #40334f;
+    }
+
+    .side-panel h3 {
+      font-size: 15px;
+      margin-bottom: 17px;
+    }
+
+    .availability-ring {
+      width: 145px;
+      height: 145px;
+      margin: 12px auto 20px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(
+        var(--green) 0deg 180deg,
+        #443149 180deg 360deg
+      );
+      box-shadow: 0 0 25px rgba(168,121,239,.12);
+    }
+
+    .ring-inner {
+      width: 116px;
+      height: 116px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #1c172a;
+    }
+
+    .ring-inner strong {
+      font-size: 29px;
+    }
+
+    .ring-inner span {
+      color: var(--muted);
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    .legend {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      margin-top: 15px;
+    }
+
+    .legend-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .legend-name {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .legend-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.green {
+      background: var(--green);
+      box-shadow: 0 0 9px var(--green);
+    }
+
+    .legend-dot.red {
+      background: var(--red);
+      box-shadow: 0 0 9px var(--red);
+    }
+
+    .system-info {
+      margin-top: 23px;
+      padding-top: 18px;
+      border-top: 1px solid #40334f;
+    }
+
+    .system-info h3 {
+      margin-bottom: 15px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 11px;
+    }
+
+    .info-row span:first-child {
+      color: var(--muted);
+    }
+
+    .info-row span:last-child {
+      color: #f1eaff;
+      text-align: right;
+    }
+
+    /* FOOTER */
+
+    footer {
+      text-align: center;
+      color: #958ba7;
+      font-size: 11px;
+      margin-top: 35px;
+      padding-top: 20px;
+      border-top: 1px solid #30263e;
+      line-height: 1.8;
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 850px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+
+      .side-panel > h3 {
+        grid-column: 1 / -1;
+      }
+
+      .system-info {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 17px 12px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .top-right {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      .nav {
+        width: 100%;
+        justify-content: space-around;
+      }
+
+      .nav span {
+        padding: 9px 7px;
+        font-size: 10px;
+      }
+
+      .connection {
+        margin-left: auto;
+      }
+
+      .stats {
+        gap: 8px;
+      }
+
+      .stat {
+        padding: 14px 10px;
+      }
+
+      .stat-value {
+        font-size: 25px;
+      }
+
+      .stat-label {
+        font-size: 9px;
+      }
+
+      .slots {
+        grid-template-columns: 1fr;
+      }
+
+      .parking-bay {
+        height: 170px;
+      }
+
+      .side-panel {
+        display: block;
+      }
+
+      .system-info {
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid #40334f;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- HEADER -->
+
+    <header class="topbar">
+
+      <div class="brand">
+        <div class="brand-icon">🚘</div>
+        <div>
+          <h2>PARK.GUARD</h2>
+          <p>SMART PARKING MANAGEMENT</p>
+        </div>
+      </div>
+
+      <div class="top-right">
+
+        <nav class="nav">
+          <span class="active">Dashboard</span>
+          <span>Parking</span>
+          <span>Overview</span>
+        </nav>
+
+        <div class="connection">
+          <span class="connection-dot" id="connectionDot"></span>
+          <span id="connection">Connecting...</span>
+        </div>
+
+      </div>
+
+    </header>
+
+    <!-- TITLE -->
+
+    <section class="heading">
+      <h1>Smart Parking Status</h1>
+      <p>Real-time parking availability and monitoring dashboard</p>
+    </section>
+
+    <!-- STATISTICS -->
+
+    <section class="stats">
+
+      <div class="stat total">
+        <div class="stat-label">TOTAL PARKING SLOTS</div>
+        <div class="stat-value" id="totalCount">4</div>
+      </div>
+
+      <div class="stat free">
+        <div class="stat-label">AVAILABLE SLOTS</div>
+        <div class="stat-value" id="freeCount">--</div>
+      </div>
+
+      <div class="stat occupied">
+        <div class="stat-label">OCCUPIED SLOTS</div>
+        <div class="stat-value" id="occupiedCount">--</div>
+      </div>
+
+    </section>
+
+    <!-- MAIN CONTENT -->
+
+    <main class="main-layout">
+
+      <section>
+
+        <div class="section-heading">
+          <h2>Parking Overview</h2>
+          <span>4 monitored spaces</span>
+        </div>
+
+        <div class="slots">
+
+          <!-- SLOT 1 -->
+
+          <article class="slot unknown" id="card-Slot1">
+
+            <div class="slot-top">
+              <h3>Parking Slot 01</h3>
+              <span class="status" id="Slot1">LOADING</span>
+            </div>
+
+            <div class="parking-bay">
+              <span class="entry-label">ENTRY</span>
+
+              <div class="car">
+                <span class="wheel left front"></span>
+                <span class="wheel right front"></span>
+                <span class="wheel left rear"></span>
+                <span class="wheel right rear"></span>
+
+                <div class="car-body">
+                  <span class="car-glass front"></span>
+                  <span class="car-glass rear"></span>
+                  <span class="car-roof"></span>
+                  <span class="car-light"></span>
+                </div>
+              </div>
+
+              <span class="bay-label">SLOT 01</span>
+            </div>
+
+          </article>
+
+          <!-- SLOT 2 -->
+
+          <article class="slot unknown" id="card-Slot2">
+
+            <div class="slot-top">
+              <h3>Parking Slot 02</h3>
+              <span class="status" id="Slot2">LOADING</span>
+            </div>
+
+            <div class="parking-bay">
+              <span class="entry-label">ENTRY</span>
+
+              <div class="car">
+                <span class="wheel left front"></span>
+                <span class="wheel right front"></span>
+                <span class="wheel left rear"></span>
+                <span class="wheel right rear"></span>
+
+                <div class="car-body">
+                  <span class="car-glass front"></span>
+                  <span class="car-glass rear"></span>
+                  <span class="car-roof"></span>
+                  <span class="car-light"></span>
+                </div>
+              </div>
+
+              <span class="bay-label">SLOT 02</span>
+            </div>
+
+          </article>
+
+          <!-- SLOT 3 -->
+
+          <article class="slot unknown" id="card-Slot3">
+
+            <div class="slot-top">
+              <h3>Parking Slot 03</h3>
+              <span class="status" id="Slot3">LOADING</span>
+            </div>
+
+            <div class="parking-bay">
+              <span class="entry-label">ENTRY</span>
+
+              <div class="car">
+                <span class="wheel left front"></span>
+                <span class="wheel right front"></span>
+                <span class="wheel left rear"></span>
+                <span class="wheel right rear"></span>
+
+                <div class="car-body">
+                  <span class="car-glass front"></span>
+                  <span class="car-glass rear"></span>
+                  <span class="car-roof"></span>
+                  <span class="car-light"></span>
+                </div>
+              </div>
+
+              <span class="bay-label">SLOT 03</span>
+            </div>
+
+          </article>
+
+          <!-- SLOT 4 -->
+
+          <article class="slot unknown" id="card-Slot4">
+
+            <div class="slot-top">
+              <h3>Parking Slot 04</h3>
+              <span class="status" id="Slot4">LOADING</span>
+            </div>
+
+            <div class="parking-bay">
+              <span class="entry-label">ENTRY</span>
+
+              <div class="car">
+                <span class="wheel left front"></span>
+                <span class="wheel right front"></span>
+                <span class="wheel left rear"></span>
+                <span class="wheel right rear"></span>
+
+                <div class="car-body">
+                  <span class="car-glass front"></span>
+                  <span class="car-glass rear"></span>
+                  <span class="car-roof"></span>
+                  <span class="car-light"></span>
+                </div>
+              </div>
+
+              <span class="bay-label">SLOT 04</span>
+            </div>
+
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- RIGHT SIDE PANEL -->
+
+      <aside class="side-panel">
+
+        <h3>Parking Availability</h3>
+
+        <div>
+          <div class="availability-ring" id="availabilityRing">
+            <div class="ring-inner">
+              <strong id="availabilityPercent">--%</strong>
+              <span>Available</span>
+            </div>
+          </div>
+
+          <div class="legend">
+
+            <div class="legend-row">
+              <span class="legend-name">
+                <span class="legend-dot green"></span>
+                Free spaces
+              </span>
+              <strong id="legendFree">--</strong>
+            </div>
+
+            <div class="legend-row">
+              <span class="legend-name">
+                <span class="legend-dot red"></span>
+                Occupied spaces
+              </span>
+              <strong id="legendOccupied">--</strong>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="system-info">
+
+          <h3>System Information</h3>
+
+          <div class="info-row">
+            <span>System</span>
+            <span>Smart Parking IoT</span>
+          </div>
+
+          <div class="info-row">
+            <span>Controller</span>
+            <span>ESP32-S3</span>
+          </div>
+
+          <div class="info-row">
+            <span>Database</span>
+            <span>Firebase RTDB</span>
+          </div>
+
+          <div class="info-row">
+            <span>Last Updated</span>
+            <span id="lastUpdated">Waiting...</span>
+          </div>
+
+        </div>
+
+      </aside>
+
+    </main>
+
+    <footer>
+      Smart Parking System | ESP32-S3 & Firebase
+      <br>
+      Real-Time IoT Parking Management
+    </footer>
+
+  </div>
+
+  <!-- FIREBASE -->
+
+  <script type="module">
+
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+
+    import {
+      getDatabase,
+      ref,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js";
+
+
+    // YOUR EXISTING FIREBASE CONFIGURATION
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDVxOI5r0FHrs5R1DYnicrD7gFsM54xl5s",
+      authDomain: "smart-parking-esp32-da9e6.firebaseapp.com",
+      databaseURL: "https://smart-parking-esp32-da9e6-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "smart-parking-esp32-da9e6",
+      storageBucket: "smart-parking-esp32-da9e6.firebasestorage.app",
+      messagingSenderId: "994776975781",
+      appId: "1:994776975781:web:a783c5d8d70ec8d817004c"
+    };
+
+
+    // INITIALIZE FIREBASE
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const slots = ["Slot1", "Slot2", "Slot3", "Slot4"];
+
+
+    // CONNECTION STATUS
+
+    const connectionDot =
+      document.getElementById("connectionDot");
+
+    const connectionText =
+      document.getElementById("connection");
+
+    function updateConnection(online) {
+
+      connectionDot.classList.remove("online", "offline");
+
+      if (online) {
+
+        connectionDot.classList.add("online");
+        connectionText.textContent = "Firebase Connected";
+
+      } else {
+
+        connectionDot.classList.add("offline");
+        connectionText.textContent = "Firebase Disconnected";
+
+      }
+    }
+
+
+    // MONITOR FIREBASE CONNECTION
+
+    const connectionRef = ref(database, ".info/connected");
+
+    onValue(connectionRef, (snapshot) => {
+
+      updateConnection(snapshot.val() === true);
+
+    });
+
+
+    // READ PARKING DATA
+
+    const parkingRef = ref(database, "Parking");
+
+    onValue(parkingRef, (snapshot) => {
+
+      const data = snapshot.val();
+
+      let free = 0;
+      let occupied = 0;
+
+      slots.forEach((slot) => {
+
+        const value = data ? data[slot] : null;
+
+        const statusElement =
+          document.getElementById(slot);
+
+        const cardElement =
+          document.getElementById("card-" + slot);
+
+        cardElement.classList.remove(
+          "free",
+          "occupied",
+          "unknown"
+        );
+
+        if (String(value).toLowerCase() === "free") {
+
+          statusElement.textContent = "FREE";
+          cardElement.classList.add("free");
+          free++;
+
+        } else if (
+          String(value).toLowerCase() === "occupied"
+        ) {
+
+          statusElement.textContent = "OCCUPIED";
+          cardElement.classList.add("occupied");
+          occupied++;
+
+        } else {
+
+          statusElement.textContent = "UNKNOWN";
+          cardElement.classList.add("unknown");
+
+        }
+
+      });
+
+
+      // UPDATE STATISTICS
+
+      document.getElementById("freeCount").textContent = free;
+
+      document.getElementById("occupiedCount").textContent =
+        occupied;
+
+      document.getElementById("legendFree").textContent = free;
+
+      document.getElementById("legendOccupied").textContent =
+        occupied;
+
+
+      // UPDATE AVAILABILITY PERCENTAGE
+
+      const percentage = Math.round((free / slots.length) * 100);
+
+      document.getElementById("availabilityPercent").textContent =
+        percentage + "%";
+
+      const occupiedDegrees =
+        (occupied / slots.length) * 360;
+
+      document.getElementById("availabilityRing").style.background =
+        `conic-gradient(
+          #57d9b0 0deg ${percentage * 3.6}deg,
+          #443149 ${percentage * 3.6}deg 360deg
+        )`;
+
+
+      // UPDATE TIME
+
+      document.getElementById("lastUpdated").textContent =
+        new Date().toLocaleTimeString();
+
+    }, (error) => {
+
+      updateConnection(false);
+
+      console.error("Firebase error:", error);
+
+    });
+
+  </script>
+
+</body>
+</html>
