@@ -1,49 +1,95 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 
-/*
-  PROJECT: IoT Smart Parking System
-  CONTROLLER: ESP32-S3 N16R8
-  SENSORS: 4 x HC-SR04
-  DATABASE: Firebase Realtime Database
+// Wi-Fi Credentials (Change these to match your mobile hotspot SSID and Password)
+const char* ssid = "Nothing Phone (4b)_3427";
+const char* password = "iamsocool";
 
-  Slot status:
-  Free = Parking space available
-  Occupied = Vehicle detected
-*/
+// Firebase Database URL
+String firebaseHost = "https://smart-parking-esp32-da9e6-default-rtdb.asia-southeast1.firebasedatabase.app/Parking.json";
 
-// Parking slot status
-String slot1 = "Free";
-String slot2 = "Free";
-String slot3 = "Free";
-String slot4 = "Free";
+// Exactly Matched Pins from Your Wiring Notes
+const int trigPins[4] = {5, 16, 32, 19};   // Slot 1, 2, 3, 4 TRIG
+const int echoPins[4] = {18, 21, 23, 17};  // Slot 1, 2, 3, 4 ECHO
 
-// Sensor distance threshold (to be calibrated)
-const int DISTANCE_THRESHOLD = 10;
+// Distance threshold in cm (Car present if distance < 20cm)
+const int distanceThreshold = 20;
 
-// Setup
 void setup() {
   Serial.begin(115200);
 
-  Serial.println("Smart Parking System");
-  Serial.println("ESP32-S3 Initialisation");
+  // Initialize sensor pins
+  for (int i = 0; i < 4; i++) {
+    pinMode(trigPins[i], OUTPUT);
+    pinMode(echoPins[i], INPUT);
+  }
 
-  // Sensor pin setup will be added later
-  // LED pin setup will be added later
-  // Wi-Fi setup will be added later
-  // Firebase setup will be added later
+  // Connect to Wi-Fi (Mobile Hotspot)
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected! IP: " + WiFi.localIP().toString());
 }
 
-// Main loop
+long readDistance(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  long duration = pulseIn(echoPin, HIGH, 30000); // 30ms timeout
+  if (duration == 0) return 999;
+  return duration * 0.034 / 2;
+}
+
 void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    String slotStatus[4];
 
-  // 1. Read ultrasonic sensors
+    // Read all 4 sensors sequentially
+    for (int i = 0; i < 4; i++) {
+      long dist = readDistance(trigPins[i], echoPins[i]);
+      if (dist <= distanceThreshold) {
+        slotStatus[i] = "Occupied";
+      } else {
+        slotStatus[i] = "Free";
+      }
+      Serial.print("Slot "); Serial.print(i + 1);
+      Serial.print(": "); Serial.print(dist); Serial.print("cm -> ");
+      Serial.println(slotStatus[i]);
+    }
 
-  // 2. Calculate distance
+    // Build JSON payload for Firebase
+    String jsonPayload = "{";
+    jsonPayload += "\"Slot1\":\"" + slotStatus[0] + "\",";
+    jsonPayload += "\"Slot2\":\"" + slotStatus[1] + "\",";
+    jsonPayload += "\"Slot3\":\"" + slotStatus[2] + "\",";
+    jsonPayload += "\"Slot4\":\"" + slotStatus[3] + "\"";
+    jsonPayload += "}";
 
-  // 3. Determine Free or Occupied
+    // Send HTTP PATCH request to Firebase Realtime Database
+    HTTPClient http;
+    http.begin(firebaseHost);
+    http.addHeader("Content-Type", "application/json");
+    
+    int httpResponseCode = http.PATCH(jsonPayload);
 
-  // 4. Control LEDs
+    if (httpResponseCode > 0) {
+      Serial.println("Firebase update successful: " + String(httpResponseCode));
+    } else {
+      Serial.println("Error updating Firebase: " + String(httpResponseCode));
+    }
+    
+    http.end();
+  } else {
+    Serial.println("Wi-Fi Disconnected. Reconnecting...");
+    WiFi.reconnect();
+  }
 
-  // 5. Send status to Firebase
-
-  delay(1000);
+  delay(2000); // Update every 2 seconds
 }
