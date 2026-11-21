@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Parking Status | Park.Guard</title>
+  <title>Smart Parking Status | Park.Grid</title>
 
   <style>
     * {
@@ -695,7 +694,7 @@
       <div class="brand">
         <div class="brand-icon">🚘</div>
         <div>
-          <h2>PARK.GUARD</h2>
+          <h2>Park.Grid</h2>
           <p>SMART PARKING MANAGEMENT</p>
         </div>
       </div>
@@ -932,7 +931,7 @@
 
           <div class="info-row">
             <span>Controller</span>
-            <span>ESP32-S3</span>
+            <span>ESP32</span>
           </div>
 
           <div class="info-row">
@@ -952,7 +951,7 @@
     </main>
 
     <footer>
-      Smart Parking System | ESP32-S3 & Firebase
+      Smart Parking System | ESP32 & Firebase
       <br>
       Real-Time IoT Parking Management
     </footer>
@@ -973,7 +972,7 @@
     } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js";
 
 
-    // YOUR EXISTING FIREBASE CONFIGURATION
+    // FIREBASE CONFIGURATION
 
     const firebaseConfig = {
       apiKey: "AIzaSyDVxOI5r0FHrs5R1DYnicrD7gFsM54xl5s",
@@ -1101,9 +1100,6 @@
 
       document.getElementById("availabilityPercent").textContent =
         percentage + "%";
-
-      const occupiedDegrees =
-        (occupied / slots.length) * 360;
 
       document.getElementById("availabilityRing").style.background =
         `conic-gradient(
